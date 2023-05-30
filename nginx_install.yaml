@@ -1,3 +1,4 @@
+---
 - name: web-server confifuration
   hosts: Web-Servers
   become: true
