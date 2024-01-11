@@ -1,17 +1,18 @@
----
-- name: web-server confifuration
-  hosts: web-servers
+- name: web-server configuration
+  hosts: web-Servers
   become: true
   tasks:
-    - name: ensure nginx is at the latest version
+    - name: Installing Nginx web server
       apt:
         name: nginx
         state: latest
-    - name: start nginx
+    - name: start nginx and enable nginx service
       service:
         name: nginx
         state: started
         enabled: yes  # if you want to also enable nginx
+
+
 
 - name: setup Mysql 
   become: yes
@@ -35,17 +36,17 @@
         state: started
         enabled: yes    
 
-    - name: creating mysql user (medium_post)
+    - name: creating mysql user 
       mysql_user:
-        name: "MunaTeach"
-        password: "Muna@11"
+        name: "{{db_user}}"
+        password: "{{db_pass}}"
         priv: '*.*:ALL'
         host: '%'
         state: present   
 
-    - name: creating agunigbo_db
+    - name: creating munateach_db
       mysql_db:
-        name: "MunaTeach"
+        name: "{{db_name}}"
         state: present    
         
     - name: Enable remote login to mysql
@@ -55,33 +56,59 @@
          line: 'bind-address = 0.0.0.0'
          backup: yes
       notify:
-         - Restart mysql  
-         
-  handlers:
+         - Restart mysql   
+  handlers:      
     - name: Restart mysql
       service:
         name: mysql
         state: restarted
 
+
 - name: Install apache httpd
   hosts: Apache-Server
   become: true
   tasks:  
-  - name: Install Apache Webserver
-    apt: 
-      name: apache2 
-      update_cache: yes 
-      state: latest
-  - name: Enable Apache on system reboot
-    service: 
-      name: apache2
-      enabled: yes
-    notify: restart apache
+      - name: Install Apache Webserver
+        apt: 
+          name: apache2
+          update_cache: yes 
+          state: latest
+      - name: Enable Apache on system reboot
+        service: 
+          name: apache2
+          enabled: yes
+        notify: restart apache
+
+      - name: Create document root for domain configured in host variable
+        file:
+          path: "/var/www/{{ http_host }}"
+          state: directory
+          owner: www-data
+          group: www-data
+          mode: '0755'
+ 
+      - name: Copy your index file
+        template:
+           src: "files/index-template.html"
+           dest: "/var/www/{{ http_host }}/index.html"
+ 
+      - name: Set up virtuahHost
+        template:
+           src: "files/apache-template.conf"
+           dest: "/etc/apache2/sites-available/{{http_conf}}"
+ 
+      - name: Enable site
+        command: a2ensite {{http_conf}}
+        notify: restart-apache
+ 
+      - name: "UFW firewall allow HTTP on port {{ http_port }}"
+        ufw:
+          rule: allow
+          port: "{{ http_port }}"
+          proto: tcp
+
   handlers:
-  - name: restart apache
-    service: 
-      name: apache2 
-      state: restarted
-
-
-        
+    - name: restart-apache
+      service: 
+        name: apache2 
+        state: restarted
