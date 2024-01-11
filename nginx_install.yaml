@@ -1,6 +1,6 @@
 ---
 - name: web-server confifuration
-  hosts: Web-Servers
+  hosts: Web-servers
   become: true
   tasks:
     - name: ensure nginx is at the latest version
@@ -15,7 +15,7 @@
 
 - name: setup Mysql 
   become: yes
-  hosts: Dbservers
+  hosts: Db-servers
   tasks:
     - name: Installing Mysql  and dependencies
       package:
