@@ -37,15 +37,15 @@
 
     - name: creating mysql user (medium_post)
       mysql_user:
-        name: "{{db_user}}"
-        password: "{{db_pass}}"
+        name: "MunaTeach"
+        password: "Muna@11"
         priv: '*.*:ALL'
         host: '%'
         state: present   
 
     - name: creating agunigbo_db
       mysql_db:
-        name: "{{db_name}}"
+        name: "MunaTeach"
         state: present    
         
     - name: Enable remote login to mysql
